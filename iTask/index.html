@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Tasks</title>
+  <link rel="icon" href="favicon.png">
+  <link href="index.css" rel="stylesheet">
+</head>
+<body>
+  <v-app id="app" v-cloak>
+    <v-app-bar dense flat outlined app>
+      <v-col cols="3" class="d-flex justify-center">
+        <p id="username" class="text-h6">{{username}}</p>
+      </v-col>
+      <v-col cols="6" class="d-flex-column">
+            <div id="stats">
+              <div>
+                <v-icon small color="warning">mdi-star-four-points</v-icon>
+                <v-progress-linear color="warning" height="5" :value="experience" class="ma-1"></v-progress-linear>
+              </div>
+              <div>
+                <v-icon small color="success">mdi-heart</v-icon>
+                <v-progress-linear color="success" height="5" :value="health" class="ma-1"></v-progress-linear>
+              </div>
+            </div>
+      </v-col>
+      <v-col cols="2" class="d-flex justify-end">
+          <p id="coins">{{points}}</p><v-icon color="amber darken-2">mdi-circle-multiple-outline</v-icon>
+      </v-col>
+      <v-col cols="1" class="d-flex justify-end">
+        <v-btn icon theme="paper">
+          <v-icon size="32" @click="settings = true">mdi-cog-outline</v-icon>
+          <v-dialog v-model="settings" fullscreen scrollable>
+            <v-card>
+              <v-app-bar flat outlined>
+                <v-col cols="3">
+                </v-col>
+                <v-col cols="6" class="d-flex justify-center">
+                  <h1>Settings</h1>
+                </v-col>
+                <v-col cols="3" class="d-flex justify-end">
+                  <v-icon size="32" @click="settings = false" dense>mdi-close</v-icon>
+                </v-col>
+              </v-app-bar>
+              <div id="settings">
+                <v-card-title>Layout</v-card-title>
+                <v-divider></v-divider>
+                <div class="section">
+                  <span class="mr-3">Theme: </span><v-switch v-model="theme" @click="switchTheme()"></v-switch>
+                </div>
+                <v-card-title>User data</v-card-title>
+                <v-divider></v-divider>
+              </div>
+            </v-card>
+          </v-dialog>
+        </v-btn>
+      </v-col>
+    </v-app-bar>
+    <div id="main">
+      <v-card id="tasks" outlined>
+        <v-row class="d-flex justify-center ma-3">
+          <v-menu bottom :close-on-content-click="false" nudge-left="57" nudge-bottom="40">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn color="primary" outlined v-bind="attrs" v-on="on">
+                Task
+              </v-btn>
+            </template>
+            <v-card class="pa-1" flat outlined>
+              <v-text-field placeholder="Task ..." hide-details class="ma-1 pa-0" color="primary" @keydown.enter="createTask()" v-model="newTask"></v-text-field>
+            </v-card>
+          </v-menu>
+          <v-btn @click="deleteAllTasks()" absolute right icon color="error">
+            <v-icon>
+              mdi-delete-outline
+            </v-icon>
+          </v-btn>
+        </v-row>
+        <v-divider></v-divider>
+        <div id="tasks-contents">
+          <task v-for="(task, i) in tasks" :key="i" :text="task.name" :task-index="i" :frequency="task.frequency" :difficulty="task.difficulty" :created="task.created" :completed="task.completed" :start="task.start" :end="task.end" v-on:delete-task="deleteTask" v-on:edit-task="editTask" v-on:complete-task="completeTask"></task>
+        </div>
+      </v-card>
+      <v-card id="objectives" outlined>
+        <v-row class="d-flex justify-center ma-3">
+          <v-menu bottom :close-on-content-click="false" nudge-left="31" nudge-bottom="40" >
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn color="primary" outlined v-bind="attrs" v-on="on">
+                Objectives
+              </v-btn>
+            </template>
+            <v-card class="pa-1" flat outlined>
+              <v-text-field placeholder="Objective ..." hide-details class="ma-1 pa-0" color="primary" @keydown.enter="createObjective()" v-model="newObjective"></v-text-field>
+            </v-card>
+          </v-menu>
+        </v-row>
+        <v-divider></v-divider>
+        <div id="objectives-contents">
+          <objective v-for="(objective, i) in objectives" :key="i" :text="objective.name" :objective-index="i" @delete-objective="deleteObjective"></objective>
+        </div>
+      </v-card>
+      <v-card id="shop" outlined>
+
+      </v-card>
+    </div>
+  </v-app>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>
