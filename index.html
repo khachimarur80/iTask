@@ -5,108 +5,157 @@
   <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-  <title>Tasks</title>
+  <title>iTask</title>
   <link rel="icon" href="favicon.png">
   <link href="index.css" rel="stylesheet">
 </head>
 <body>
   <v-app id="app" v-cloak>
-    <v-app-bar dense flat outlined app>
-      <v-col cols="3" class="d-flex justify-center">
-        <p id="username" class="text-h6">{{username}}</p>
+    <v-app-bar color="success" flat>
+      <v-col cols="5">
+        <v-btn icon>
+          <v-img src="favicon.png" height="50px" width="50px"></v-img>
+        </v-btn>
       </v-col>
-      <v-col cols="6" class="d-flex-column">
-            <div id="stats">
-              <div>
-                <v-icon small color="warning">mdi-star-four-points</v-icon>
-                <v-progress-linear color="warning" height="5" :value="experience" class="ma-1"></v-progress-linear>
-              </div>
-              <div>
-                <v-icon small color="success">mdi-heart</v-icon>
-                <v-progress-linear color="success" height="5" :value="health" class="ma-1"></v-progress-linear>
-              </div>
-            </div>
+      <v-col cols="2"  class="d-flex justify-center">
+        <h2>{{ currentTime }}</h2>
       </v-col>
-      <v-col cols="2" class="d-flex justify-end">
-          <p id="coins">{{points}}</p><v-icon color="amber darken-2">mdi-circle-multiple-outline</v-icon>
-      </v-col>
-      <v-col cols="1" class="d-flex justify-end">
-        <v-btn icon theme="paper">
-          <v-icon size="32" @click="settings = true">mdi-cog-outline</v-icon>
-          <v-dialog v-model="settings" fullscreen scrollable>
-            <v-card>
-              <v-app-bar flat outlined>
-                <v-col cols="3">
-                </v-col>
-                <v-col cols="6" class="d-flex justify-center">
-                  <h1>Settings</h1>
-                </v-col>
-                <v-col cols="3" class="d-flex justify-end">
-                  <v-icon size="32" @click="settings = false" dense>mdi-close</v-icon>
-                </v-col>
-              </v-app-bar>
-              <div id="settings">
-                <v-card-title>Layout</v-card-title>
-                <v-divider></v-divider>
-                <div class="section">
-                  <span class="mr-3">Theme: </span><v-switch v-model="theme" @click="switchTheme()"></v-switch>
-                </div>
-                <v-card-title>User data</v-card-title>
-                <v-divider></v-divider>
-              </div>
-            </v-card>
-          </v-dialog>
+      <v-col cols="5" class="d-flex justify-end">
+        <v-btn icon dense outlined>
+          <v-icon large>mdi-account</v-icon>
         </v-btn>
       </v-col>
     </v-app-bar>
     <div id="main">
-      <v-card id="tasks" outlined>
-        <v-row class="d-flex justify-center ma-3">
-          <v-menu bottom :close-on-content-click="false" nudge-left="57" nudge-bottom="40">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn color="primary" outlined v-bind="attrs" v-on="on">
-                Task
-              </v-btn>
-            </template>
-            <v-card class="pa-1" flat outlined>
-              <v-text-field placeholder="Task ..." hide-details class="ma-1 pa-0" color="primary" @keydown.enter="createTask()" v-model="newTask"></v-text-field>
-            </v-card>
-          </v-menu>
-          <v-btn @click="deleteAllTasks()" absolute right icon color="error">
-            <v-icon>
-              mdi-delete-outline
-            </v-icon>
-          </v-btn>
-        </v-row>
-        <v-divider></v-divider>
-        <div id="tasks-contents">
-          <task v-for="(task, i) in tasks" :key="i" :text="task.name" :task-index="i" :frequency="task.frequency" :difficulty="task.difficulty" :created="task.created" :completed="task.completed" :start="task.start" :end="task.end" v-on:delete-task="deleteTask" v-on:edit-task="editTask" v-on:complete-task="completeTask"></task>
-        </div>
-      </v-card>
-      <v-card id="objectives" outlined>
-        <v-row class="d-flex justify-center ma-3">
-          <v-menu bottom :close-on-content-click="false" nudge-left="31" nudge-bottom="40" >
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn color="primary" outlined v-bind="attrs" v-on="on">
-                Objectives
-              </v-btn>
-            </template>
-            <v-card class="pa-1" flat outlined>
-              <v-text-field placeholder="Objective ..." hide-details class="ma-1 pa-0" color="primary" @keydown.enter="createObjective()" v-model="newObjective"></v-text-field>
-            </v-card>
-          </v-menu>
-        </v-row>
-        <v-divider></v-divider>
-        <div id="objectives-contents">
-          <objective v-for="(objective, i) in objectives" :key="i" :text="objective.name" :objective-index="i" @delete-objective="deleteObjective"></objective>
-        </div>
-      </v-card>
-      <v-card id="shop" outlined>
+      <div id="toolbar">
+        <v-dialog width="400" persistent v-model="creatingProject">
+          <template v-slot:activator="{ attrs, on }">
+            <v-btn outlined color="success" v-bind="attrs" v-on="on">Proyecto</v-btn>
+          </template>
+          <v-card class="pa-10 pb-5 pt-5" ref="projectForm">
+              <v-card-title class="d-flex justify-center">
+                Nuevo proyecto
+              </v-card-title>
+              <v-divider></v-divider>
+              <v-text-field clearable label="Nombre" v-model="projectName" :rules="[() => !!projectName || 'This field is required']" ref="projectName"></v-text-field>
+              <v-text-field clearable label="Fecha" type="date" hint="Optional" :rules="[(v) => !v || new Date(v) >= new Date().setHours(0, 0, 0, 0) || 'Date must be today or in the future']" v-model="projectDeadline" ref="projectDeadline"></v-text-field>
+              <v-textarea v-model="projectDescription" label="Description" outlined no-resize rows="3"></v-textarea>
+              <v-card-actions class="d-flex-column justify-center">
+                <v-menu bottom :close-on-content-click="false" nudge-left="76" nudge-bottom="40">
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on" small><v-icon>mdi-plus</v-icon></v-btn>
+                  </template>
+                  <v-card class="pa-1" outlined>
+                    <v-text-field placeholder="Hábito ..." hide-details class="ma-1 pa-0" color="primary" @keydown.enter="addTaskProject()" v-model="newTask" dense></v-text-field>
+                  </v-card>
+                </v-menu>
+              </v-card-actions>
+              <div class="display-tasks">
+                <v-chip v-for="(task, i) in projectTasks" :key="i" close outlined label @click:close="removeTask(i)" class="ma-1">{{ task.name }}</v-chip>
+              </div>
+              <v-card-actions class="justify-space-between">
+                <v-btn color="primary" outlined @click="cancelProject()">Cancelar</v-btn>
+                <v-btn color="warning" outlined @click="saveProject()">Guardar</v-btn>
+              </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </div>
+      <v-divider></v-divider>
+      <div id="projects">
+        <v-btn absolute left class="ml-n3 centered" elevation="0" icon @click="projectsLeft" v-if="projects.length">
+          <v-icon size="32" color="black">mdi-chevron-left</v-icon>
+        </v-btn>
+        <v-btn v-for="(project, i) in projects" :key="i" height="40px" outlined :color="project.color" @click="editProject(project)">
+          {{ project.name }}
+        </v-btn>
+        <v-btn absolute right class="mr-n3 centered" elevation="0" icon @click="projectsRight" v-if="projects.length">
+          <v-icon size="32" color="black">mdi-chevron-right</v-icon>
+        </v-btn>
+      </div>
+      <div id="contents">
+        <div id="habits">
+          <h2 class="text-center">Hábitos</h2>
+          <v-card v-for="(task, i) in tasks" :key="i" :style="{ outline: isDisabled(task.frequency) ? '1px solid #ddd' : '1px solid ' + task.color}" flat class="mt-1 d-flex align-center">
+            <v-checkbox dense hide-details class="ml-2  mb-2" :color="task.color" :disabled="isDisabled(task.frequency)" @click="completeTask(task)" v-model="task.completed"></v-checkbox>
+            <v-card-text class="pa-2 text-body-1">{{ task.name }}</v-card-text>
+            <v-btn @click="editTask(task)" icon dense class="mr-1"><v-icon>mdi-pencil</v-icon></v-btn>
+          </v-card>
+          <v-dialog v-model="editingTask" max-width="400" persistent>
+            <v-card  class="pa-10 pb-5 pt-5">
+              <v-card-title class="d-flex justify-center">
+                Editar tarea
+              </v-card-title>
+              <v-divider></v-divider>
+              <v-text-field clearable label="Nombre" v-model="newTaskName"></v-text-field>
+              <v-text-field clearable label="Tiempo" v-model="newTaskDuration" type="number"></v-text-field>
+              <v-btn-toggle v-model="newTaskFrequency" multiple class="ml-n2">
+                  <v-btn> L </v-btn>
+                  <v-btn> M </v-btn>
+                  <v-btn> X </v-btn>
+                  <v-btn> J </v-btn>
+                  <v-btn> V </v-btn>
+                  <v-btn> S </v-btn>
+                  <v-btn> D </v-btn>
+                </v-btn-toggle>
 
-      </v-card>
+              <v-card-actions class="justify-space-between pt-5">
+                <v-btn color="error" @click="deleteTaskEdit(i)" outlined>Borrar</v-btn>
+                <v-btn color="primary" @click="cancelTaskEdit()" outlined>Cancelar</v-btn>
+                <v-btn color="warning" @click="saveTaskEdit()" outlined>Editar</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </div>
+        <div id="remainders">
+          <h2 class="text-center">Recordatorios</h2>
+          <v-card v-for="(remainder, i) in remainders" :key="i" :style="{ outline: '1px solid ' + remainder.color}" flat class="mt-1 d-flex align-center">
+            <v-card-text class="pa-2 text-body-1">{{ remainder.name }}</v-card-text>
+            <v-checkbox dense hide-details class="ml-2  mb-2" :color="remainder.color" @click="dismissReminder(remainder)"></v-checkbox>
+          </v-card>
+        </div>
+        <div id="progress" :style="{ outline: '1px solid ' + editProjectColor}">
+          <v-card  class="pa-10 pb-5 pt-5" v-show="editingProject" flat>
+            <v-text-field clearable label="Nombre" v-model="newProjectName"></v-text-field>
+            <v-text-field clearable label="Fecha" type="date" v-model="newProjectDeadline" ref="projectDeadline"></v-text-field>
+            <v-textarea v-model="newProjectDescription" label="Description" outlined no-resize rows="3" hide-details></v-textarea>
+            <br>
+            <div class="d-flex justify-center mt-1">
+              <v-menu bottom :close-on-content-click="false" nudge-left="76" nudge-bottom="30">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on" small><v-icon>mdi-plus</v-icon></v-btn>
+                </template>
+                <v-card class="pa-1" outlined>
+                  <v-text-field placeholder="Hábito ..." hide-details class="ma-1 pa-0" color="primary" @keydown.enter="editTaskProject()" v-model="newTask" dense></v-text-field>
+                </v-card>
+              </v-menu>
+            </div>
+            <div class="display-tasks">
+              <v-chip v-for="(task, i) in newProjectTasks" :key="i" close outlined label @click:close="removeEditTask(i)" class="ma-1">{{ task.name }}</v-chip>
+            </div> 
+            <div class="d-flex justify-center mt-1">
+              <v-menu bottom :close-on-content-click="false" nudge-left="76" nudge-bottom="30">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn icon v-bind="attrs" v-on="on" small><v-icon>mdi-plus</v-icon></v-btn>
+                </template>
+                <v-card class="pa-1" outlined>
+                  <v-text-field placeholder="Recordatorio ..." hide-details class="ma-1 pa-0" color="primary" @keydown.enter="editRemainderProject()" v-model="newRemainder" dense></v-text-field>
+                </v-card>
+              </v-menu>
+            </div>
+            <div class="display-tasks">
+              <v-chip v-for="(remainder, i) in newProjectRemainders" :key="i" close outlined label @click:close="removeEditRemainder(i)" class="ma-1">{{ remainder.name }}</v-chip>
+            </div> 
+            <br>
+            <v-card-actions class="justify-space-between">
+              <v-btn color="error" @click="deleteProjectEdit()" outlined>Borrar</v-btn>
+              <v-btn color="primary" @click="cancelProjectEdit()" outlined>Cancelar</v-btn>
+              <v-btn color="warning" @click="saveProjectEdit()" outlined>Editar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </div>
+      </div>
     </div>
-  </v-app>
-
+  </v-app>  
   <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
   <script src="index.js"></script>

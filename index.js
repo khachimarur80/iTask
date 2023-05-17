@@ -1,276 +1,94 @@
-//Classes
-class Task {
-	constructor(name, date) {
-		this.name = name
-		this.difficulty = 0
-		this.completed = [false, true, false, false, false, false]
-		this.frequency = [0, 1, 2, 3, 4, 5, 6]
-		this.created = date
-		this.start = '00:00' 
-		this.end = '00:00'
-	}
-}
-class Objective {
-	constructor(name) {
-		this.name = name
-		this.difficulty = 1
-		this.completed = false
-		this.days = 0
-	}
-}
-class User {
-	constructor(name, date) {
-		this.name = name
-		this.level = 0
-		this.experience = 0
-		this.mana = 100
-		this.points = 0
-		this.theme = true
-		this.health = 100
-		this.created = date
-	}
-}
-
 //Functions
 
-function dateDiffInDays(date1Str, date2Str) {
-  const date1 = new Date(date1Str);
-  const date2 = new Date(date2Str);
-  const diffInMs = Math.abs(date2 - date1);
-  return Math.floor(diffInMs/1000);
+function getRandomVuetifyColor(givenColors) {
+  const randomIndex = Math.floor(Math.random() * givenColors.length);
+  const randomColor = givenColors[randomIndex];
+
+  return randomColor
 }
 
-function areDatesFromDifferentDays(date1, date2) {
-  // Get the year, month, and day values for both dates
-  const year1 = date1.getFullYear();
-  const month1 = date1.getMonth();
-  const day1 = date1.getDate();
-  const year2 = date2.getFullYear();
-  const month2 = date2.getMonth();
-  const day2 = date2.getDate();
+function generateId() {
+  let randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let idLength = 8;
+  let id = '';
 
-  // Compare the year, month, and day values of both dates
-  if (year1 !== year2 || month1 !== month2 || day1 !== day2) {
-    return true; // dates are from different days
-  } else {
-    return false; // dates are from the same day
+  for (let i = 0; i < idLength; i++) {
+    let randomIndex = Math.floor(Math.random() * randomChars.length);
+    id += randomChars.charAt(randomIndex);
   }
+
+  return id;
 }
 
-function getStreakColor(daysCompleted) {
-  const colors = [
-    '#E53935',
-    '#FF8F00',
-    '#4CAF50',
-    '#1976D2',
-  ];
-
-  const numCompleted = daysCompleted.filter(Boolean).length;
-
-  let streak = 0;
-  for (let i = daysCompleted.length - 1; i >= 0; i--) {
-    if (daysCompleted[i]) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  const adjustedNumCompleted = Math.min(
-    daysCompleted.length,
-    numCompleted + streak
-  );
-  const proportionCompleted = adjustedNumCompleted / daysCompleted.length;
-  const colorIndex = Math.floor(proportionCompleted * colors.length);
-  if (colorIndex<4) {
-    return colors[colorIndex];
-  }
-  else {
-  	return colors[3]
-  }
+//Stored data
+let storedProjects = [];
+if (localStorage.getItem('projects')) {
+	storedProjects = JSON.parse(localStorage.getItem('projects'));
+}
+let storedTasks = [];
+for (let i=0; i<storedProjects.length; i++) {
+	storedTasks = storedTasks.concat(storedProjects[i].tasks)
+}
+let storedRemainders = [];
+for (let i=0; i<storedProjects.length; i++) {
+	storedRemainders = storedRemainders.concat(storedProjects[i].remainders)
 }
 
-//Stored values
-localStorage = window.localStorage
-
-let user
-if (localStorage.getItem('user')) {
-	user = JSON.parse(localStorage.getItem('user'))
-}
-else {
-	var today = new Date();
-	var newUser = new User('User', today)
-	localStorage.setItem('user', JSON.stringify(newUser))
-	user = JSON.parse(localStorage.getItem('user'))
-}
-
-let storedTasks
-if (localStorage.getItem('tasks')) {
-	storedTasks = JSON.parse(localStorage.getItem('tasks'))
-	for (i=0; i<storedTasks.length; i++) {
-		var today = new Date()
-		if (areDatesFromDifferentDays(new Date(storedTasks[i].created), today)) {
-			storedTasks[i].completed.unshift(false)
-		}
+for (let i=0; i<storedTasks.length; i++) {
+	var currentDate = new Date();
+	var day = currentDate.getDate().toString().padStart(2, '0');
+	var month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+	var year = currentDate.getFullYear().toString();
+	var formattedDate = `${day}/${month}/${year}`;
+	if (storedTasks[i].history[storedTasks[i].history.length-1]!=formattedDate) {
+		storedTasks[i].completed = false
 	}
 }
-else {
-	storedTasks = []
+const colors = [
+	"#607D8B", "#795548", "#FF5722", "#FF9800", "#009688",
+	"#00BCD4", "#03A9F4", "#2196F3", "#3F51B5", "#673AB7", "#9C27B0", "#E91E63", "#F44336"
+];
+
+
+//Classes
+class Project {
+	constructor(name, description, colors, tasks, deadline = 0) {
+		this.deadline = deadline;
+		this.name = name;
+		this.description = description;
+		this.color = getRandomVuetifyColor(colors);
+		this.tasks = tasks ;
+		this.completed = false;
+		this.remainders = [];
+	}
 }
 
-let storedObjectives
-if (localStorage.getItem('objectives')) {
- 	storedObjectives = JSON.parse(localStorage.getItem('objectives'))
+class Task {
+	constructor(name) {
+		this.name = name;
+		this.pk = generateId();
+		this.color = '';
+		this.frequency = [0, 1, 2, 3, 4, 5, 6];
+		this.completed = false;
+		this.history = [];
+		this.duration = 30;
+	}
 }
-else {
-	storedObjectives = []
+
+class Remainder {
+	constructor(name, deadline='') {
+		this.name = name;
+		this.deadline = deadline;
+		this.description = '';
+		this.color = '';
+		this.showDescription = false;
+	}
 }
 
 //Custom elements
 
-const TaskCard = {
-  props: ['text', 'taskIndex', 'difficulty', 'frequency', 'created', 'completed', 'start', 'end'],
-  template: `
-    <v-card width="95%" class="mt-1 d-flex align-center" flat outlined :style="{borderColor: levelColor}">
-    	<v-checkbox dense hide-details class="ml-2  mb-2" v-model="computedCompleted" @click="changeState()"></v-checkbox>
-      <v-card-text class="pa-2 text-body-1">{{ text }}</v-card-text>
-      <v-text-field type="time" v-model="computedStart" hide-details hide-icon class="ma-0 pa-0 mb-2" color="secondary" @change="editTask()"></v-text-field>
-      <p style="margin: 6px;"> - </p>
-      <v-text-field type="time" v-model="computedEnd" hide-details hide-icon class="ma-0 pa-0 pr-2 mb-2" color="secondary" @change="editTask()"></v-text-field>
-      <v-dialog width="400">
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn icon v-bind="attrs" v-on="on" small class="mr-1">
-            <v-icon>mdi-pencil-outline</v-icon>
-          </v-btn>
-        </template>
-        <template v-slot:default="dialog">
-		      <v-card flat class="">
-		      	<br>
-		      	<v-card-text class="d-flex justify-center pa-0 ma-0 text-h6">Name</v-card-text>
-		      	<v-row class="pa-2 ma-0 justify-center align-center">
-		        	<div :contenteditable="editName" class="contenteditable" ref="taskName">{{ text }}</div>
-		        	<v-btn @click="editName=!editName" icon><v-icon>mdi-pencil-outline</v-icon></v-btn>
-		        	<div style="width: calc(50% + 36px)">
-		        		<v-progress-linear indeterminate color="primary" height="1" v-show="editName"></v-progress-linear>
-		        	</div>
-		        </v-row>
-		        <v-card-text class="d-flex justify-center pa-0 ma-0 text-h6">Difficulty</v-card-text>
-		        <v-card-actions class="justify-center">
-			        <v-btn-toggle v-model="computedDifficulty" dense>
-				        <v-btn><v-icon color="primary">mdi-knife-military</v-icon></v-btn>
-				        <v-btn><v-icon color="success">mdi-axe-battle</v-icon></v-btn>
-				        <v-btn><v-icon  color="warning">mdi-magic-staff</v-icon></v-btn>
-				        <v-btn><v-icon color="error">mdi-mace</v-icon></v-btn>
-				      </v-btn-toggle>
-			      </v-card-actions>
-			      <v-card-text class="d-flex justify-center pa-0 ma-0 text-h6">Frequency</v-card-text>
-			      <v-card-actions class="justify-center">
-			        <v-btn-toggle v-model="computedFrequency" dense multiple>
-				        <v-btn> L </v-btn>
-				        <v-btn> M </v-btn>
-				        <v-btn> X </v-btn>
-				        <v-btn> J </v-btn>
-				        <v-btn> V </v-btn>
-				        <v-btn> S </v-btn>
-				        <v-btn> D </v-btn>
-				      </v-btn-toggle>
-			      </v-card-actions>
-			      <br>
-		        <v-card-actions class="justify-center">
-		        	<v-spacer></v-spacer>
-		        	<v-btn color="error" outlined @click="dialog.value = false;deleteTask()" medium>Delete</v-btn>
-		        	<v-spacer></v-spacer>
-		        	<v-btn color="success" outlined @click="dialog.value = false;editTask()" medium>Change</v-btn>
-		        	<v-spacer></v-spacer>
-		        </v-card-actions>
-		      </v-card>
-        </template>
-      </v-dialog>
-    </v-card>
-  `,
-  data() {
-  	return {
-  		editName: false,
-  		computedText: this.text,
-  		computedFrequency: this.frequency,
-  		computedStart: this.start,
-  		computedEnd: this.end,
-  		computedDifficulty: this.difficulty,
-  		computedCompleted: this.completed[0],
-  		levelColor: getStreakColor(this.completed),
-  		colors: [
-  			'red',
-				'deep-orange',
-				'orange',
-				'amber',
-				'yellow',
-				'lime',
-				'green',
-				'teal',
-				'cyan',
-				'light-blue',
-  		]
-  	}
-  },
-  methods: {
-    deleteTask() {
-		this.$emit('delete-task', this.taskIndex);
-    },
-    editTask() {
-    	console.log('hey')
-    	this.editName = false
-    	try {
-    		this.computedText = this.$refs.taskName.innerHTML
-    	}
-    	catch {
-    		this.computedText = this.text
-    	}
-    	this.$emit('edit-task', {
-    		'text': this.computedText, 
-    		'taskIndex': this.taskIndex,
-    		'frequency': this.computedFrequency,
-    		'difficulty': this.computedDifficulty,
-    		'created': this.created,
-    		'start': this.computedStart,
-    		'end': this.computedEnd,
-    	});
-    },
-    changeState() {
-    	this.$emit('complete-task', this.taskIndex);
-    	this.levelColor = getStreakColor(this.completed)
-    }
-  }
-};
-Vue.component('task', TaskCard);
-const ObjectiveCard = {
-  props: ['text', 'objectiveIndex', 'difficulty', 'frequency'],
-  template: `
-    <v-card width="95%" outlined class="mt-1 d-flex">
-      <v-card-text class="pa-2">{{ text }}</v-card-text>
-      <v-btn icon @click="deleteObjective()"><v-icon>mdi-delete</v-icon></v-btn>
-      <v-dialog width="400">
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn icon v-bind="attrs" v-on="on">
-            <v-icon>mdi-pencil-outline</v-icon>
-          </v-btn>
-        </template>
-        <v-card>
-          <v-card-title>Objective</v-card-title>
-        </v-card>
-      </v-dialog>
-    </v-card>
-  `,
-  methods: {
-    deleteObjective() {
-		this.$emit('delete-objective', this.objectiveIndex);
-    }
-  }
-};
-Vue.component('objective', ObjectiveCard);
-
-//The app
 const vuetifyApp = new Vuetify({
 	theme: {
-    	dark: user.theme,
   	}
 })
 
@@ -278,84 +96,270 @@ const vueApp = new Vue({
 	el: '#app',
 	vuetify: vuetifyApp,
 	data: {
-		experience: user.experience,
-		mana: user.mana,
-		health: user.health,
-		points: user.points,
-		username: user.name,
-		theme: user.theme,
-		tasks: storedTasks,
-		objectives: storedObjectives,
-		treats: [],
-		settings: false,
+		creatingProject: false,
+		editingProject: false,
+		editingTask: false,
+		projects: storedProjects,
+		projectName: '',
+		projectDeadline: '',
+		projectDescription: '',
+		projectTasks: [],
+		removedProjectTasks: [],
+		editProjectTarget: [],
+		newProjectName: '',
+		newProjectDeadline: '',
+		newProjectTasks: [],
+		newProjectRemovedTasks: [],
+		newProjectDescription: '',
+		newProjectRemainders: [],
 		newTask: '',
-		newObjective: '',
-		newReward: '',
-		days: 0,
+		tasks: storedTasks,
+		currentTime: null,
+		newTaskName: '',
+		editTaskTarget: [],
+		newTaskFrequency: [],
+		newTaskDuration: 0,
+		editProjectColor: '#ddd',
+		newRemainder: '',
+		newProjectRemovedRemainders: [],
+		remainders: storedRemainders,
+
 	},
+	computed: {
+      projectForm () {
+        return {
+          projectName: this.projectName,
+          projectDeadline: this.projectDeadline,
+        }
+      },
+    },
 	methods: {
-		switchTheme: function switchTheme() {
-			this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-			user.theme = this.theme
-			localStorage.setItem('user', JSON.stringify(user))
+		cancelProject: function cancelProject() {
+			this.creatingProject = false;
+			this.projectDeadline = '';
+			this.projectName = '';
+			this.projectDescription = ''
+
+			Object.keys(this.projectForm).forEach(f => {
+          		this.$refs[f].reset();
+        	})
 		},
-		createTask: function createTask() {
-			var today = new Date();
-			var task = new Task(this.newTask, today)
-			this.tasks.push(task)
+		saveProject: function saveProject() {
+			var valid = true
+			Object.keys(this.projectForm).forEach(f => {
+	        	if (!this.projectForm[f])
+				this.$refs[f].validate(true);
+				valid *= this.$refs[f].validate(true);
+	        })
+	        if (valid===1) {
+	        	var remainingColors = colors.filter(color => {
+	        		return !this.projects.some(obj => obj.color === color)
+	        	})
+
+	        	if (this.projectDeadline=='') {
+	        		var newProject = new Project(this.projectName, this.projectDescription, remainingColors, this.projectTasks);
+	        	}
+	        	else {
+	        		var newProject = new Project(this.projectName, this.projectDescription, remainingColors, this.projectTasks, this.projectDeadline);
+	        	}
+	        	this.projects.push(newProject);
+	        	this.tasks.push(...this.projectTasks.filter(item => {
+	        		item.color = newProject.color
+					return !this.tasks.some(targetItem => targetItem.pk === item.pk);
+				}));
+
+	        	this.creatingProject = false;
+	        	this.projectTasks = [];
+	        	this.projectDescription = ''
+
+		        Object.keys(this.projectForm).forEach(f => {
+	          		this.$refs[f].reset();
+	        	})
+	        }
+	        localStorage.setItem('projects', JSON.stringify(this.projects));
+		},
+		projectsRight: function projectsRight() {
+			var first = this.projects.shift();
+			this.projects.push(first);
+			localStorage.setItem('projects', JSON.stringify(this.projects))
+		},
+		projectsLeft: function projectsLeft() {
+			var last = this.projects.pop();
+			this.projects.unshift(last);
+			localStorage.setItem('projects', JSON.stringify(this.projects))
+		},
+		editProject: function editProject(project) {
+			this.editingProject = true;
+			this.editProjectTarget = project;
+			this.newProjectName = project.name;
+			this.newProjectDeadline = project.deadline;
+			this.newProjectTasks = Array.from(project.tasks);
+			this.newProjectRemainders = Array.from(project.remainders);
+			this.newProjectDescription = project.description;
+			this.editProjectColor = project.color
+		},
+		addTaskProject: function addTaskProject() {
+			if (this.newTask) {
+				var newTaskObj = new Task(this.newTask)
+				this.projectTasks.push(newTaskObj)
+			}
 			this.newTask = ''
-			localStorage.setItem('tasks', JSON.stringify(this.tasks))
 		},
-		deleteTask: function deleteTask(taskIndex) {
-			this.tasks.splice(taskIndex, 1);
-			localStorage.setItem('tasks', JSON.stringify(this.tasks))
+		removeTask(index) {
+      		this.tasks.splice(this.tasks.indexOf(this.projectTasks[index]),1)
+      		this.projectTasks.splice(index, 1)
+    	},
+		cancelProjectEdit: function cancelProjectEdit() {
+			this.editingProject = false;
+			this.newProjectName = '';
+			this.newProjectDeadline = '';
+			this.newProjectTasks = [];
+			this.editProjectTarget = [];
+			this.newProjectRemovedTasks = [];
+			this.newProjectDescription = ''
+			this.editProjectColor = '#ddd';
 		},
-		editTask: function editTask(values) {
-			console.log(JSON.stringify(this.tasks))
-			const task = this.tasks[values.taskIndex]
-			task.name = values.text
-			task.difficulty = values.difficulty
-			task.frequency = values.frequency
-			task.start = values.start
-			task.end = values.end
-			localStorage.setItem('tasks', JSON.stringify(this.tasks))
-			console.log(JSON.stringify(this.tasks))
-		},
-		completeTask: function completeTask(taskIndex) {
-			console.log('hey')
-			const task = this.tasks[taskIndex]
-			task.completed[0] = !task.completed[0]
-			localStorage.setItem('tasks', JSON.stringify(this.tasks))
-		},
-		deleteAllTasks: function deleteAllTasks() {
-			this.tasks = []
-			localStorage.setItem('tasks', JSON.stringify(this.tasks))
-		},
-		createObjective: function createObjective() {
-			var objective = new Objective(this.newObjective)
-			this.objectives.push(objective)
-			this.newObjective = ''
-			localStorage.setItem('objectives', JSON.stringify(this.objectives))
-		},
-		deleteObjective: function deleteObjective(objectiveIndex) {
-			this.objectives.splice(objectiveIndex, 1);
-			localStorage.setItem('objectives', JSON.stringify(this.objectives))
-		},
-		createReward: function createReward() {
+		saveProjectEdit: function saveProjectEdit() {
+			this.editProjectTarget.name = this.newProjectName;
+			this.editProjectTarget.deadline = this.newProjectDeadline;
+			this.editProjectTarget.tasks = this.newProjectTasks;
+			this.editProjectTarget.description = this.newProjectDescription;
+			this.editProjectTarget.remainders = this.newProjectRemainders;
 
-		},
-		deleteReward: function deleteReward() {
+			this.tasks.push(...this.newProjectTasks.filter(item => {
+				item.color = this.editProjectTarget.color
+				return !this.tasks.some(targetItem => targetItem.pk === item.pk);
+			}));
 
+			this.remainders.push(...this.newProjectRemainders.filter(item => {
+				item.color = this.editProjectTarget.color;
+				return !this.remainders.some(targetItem => targetItem.pk === item.pk);
+			}));
+
+			this.tasks = this.tasks.filter((element) => !this.newProjectRemovedTasks.includes(element));
+			this.remainders = this.remainders.filter((element) => !this.newProjectRemovedRemainders.includes(element));
+
+			this.editingProject = false;
+			this.newProjectName = '';
+			this.newProjectDeadline = '';
+			this.newProjectTasks = [];
+			this.editProjectTarget = [];
+			this.editProjectColor = '#ddd';
+			this.newProjectRemovedTasks = [];
+			this.newProjectRemovedRemainders = [];
+			this.newProjectRemainders = [];
+
+			localStorage.setItem('projects', JSON.stringify(this.projects));
 		},
-		updateDays: function updateDays() {
-			var today = new Date();
-			this.days = dateDiffInDays(today, user.created)
+		deleteProjectEdit: function deleteProjectEdit() {
+			this.tasks = this.tasks.filter((element) => !this.editProjectTarget.tasks.includes(element));
+			this.remainders = this.remainders.filter((element) => !this.editProjectTarget.remainders.includes(element));
+
+			this.projects.splice(this.projects.indexOf(this.editProjectTarget),1);
+			localStorage.setItem('projects', JSON.stringify(this.projects));
+
+			this.editingProject = false;
+			this.newProjectName = '';
+			this.newProjectDeadline = '';
+			this.newProjectTasks = [];
+			this.editProjectTarget = [];
+			this.editProjectColor = '#ddd';
+		},
+		removeEditTask: function removeEditTask(index) {
+			this.newProjectRemovedTasks.push(this.newProjectTasks[index])
+			this.newProjectTasks.splice(index, 1)
+		},
+		removeEditRemainder: function removeEditRemainder(index) {
+			this.newProjectRemovedRemainders.push(this.newProjectRemainders[index])
+			this.newProjectRemainders.splice(index, 1)
+		},
+		editTaskProject: function editTaskProject() {
+			if (this.newTask) {
+				var newTaskObj = new Task(this.newTask);
+				this.newProjectTasks.push(newTaskObj);
+			}
+			this.newTask = '';
+		},
+		editRemainderProject: function editRemainderProject() {
+			if (this.newRemainder) {
+				var newTaskObj = new Task(this.newRemainder);
+				this.newProjectRemainders.push(newTaskObj);
+			}
+			this.newRemainder = '';
+		},
+		updateTime: function updateTime() {
+			const now = new Date();
+			this.currentTime = now.toLocaleTimeString();
+		},
+		editTask: function editTask(task) {
+			this.editingTask = true;
+			this.editTaskTarget = task;
+
+			this.newTaskName = task.name;
+			this.newTaskDuration = task.duration
+			this.newTaskFrequency = task.frequency
+		},
+		deleteTaskEdit: function deleteTaskEdit() {
+			var project = this.projects.find(obj => obj.color === this.editTaskTarget.color);
+
+			this.tasks.splice(this.tasks.indexOf(this.editTaskTarget),1);
+			project.tasks.splice(project.tasks.indexOf(this.editTaskTarget),1);
+
+			this.newTaskName = '';
+			this.editTaskTarget = [];
+			this.editingTask = false;
+
+			localStorage.setItem('projects', JSON.stringify(this.projects));
+		},
+		cancelTaskEdit: function cancelTaskEdit() {
+			this.newTaskName = '';
+			this.editTaskTarget = [];
+			this.editingTask = false;
+		},
+		saveTaskEdit: function saveTaskEdit() {
+			this.editTaskTarget.name = this.newTaskName
+			this.editTaskTarget.duration = this.newTaskDuration
+			this.editTaskTarget.frequency = this.newTaskFrequency
+
+			this.newTaskName = '';
+			this.newTaskDuration = 0;
+			this.newTaskFrequency = [];
+			this.editTaskTarget = [];
+			this.editingTask = false;
+
+			localStorage.setItem('projects', JSON.stringify(this.projects));
+		},
+		isDisabled: function isDisabled(frequency) {
+			var dayOfWeek = new Date().getDay() - 1;
+      		return !frequency.includes(dayOfWeek);
+		},
+		completeTask: function completeTask(task) {
+			if (task.completed) {
+				var currentDate = new Date();
+				var day = currentDate.getDate().toString().padStart(2, '0');
+				var month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+				var year = currentDate.getFullYear().toString();
+				var formattedDate = `${day}/${month}/${year}`;
+				task.history.push(formattedDate)
+			}
+			else {
+				task.history.pop();
+			}
+			localStorage.setItem('projects', JSON.stringify(this.projects));
+		},
+		dismissReminder: function dismissReminder(remainder) {
+			var project = this.projects.find(obj => obj.color === remainder.color);
+			this.remainders.splice(this.remainders.indexOf(remainder),1);
+			project.remainders.splice(project.remainders.indexOf(remainder),1);
+			localStorage.setItem('projects', JSON.stringify(this.projects));
+		},
+		showReminderDescription: function showReminderDescription(remainder) {
+			remainder.showDescription = !remainder.showDescription;
 		}
+
 	},
 	created() {
-		var today = new Date();
-		this.days = dateDiffInDays(today, user.created)
-
-		setInterval(this.updateDays, 3000);
-	}
+	    this.updateTime();
+	    setInterval(this.updateTime, 1000);
+	},
 })
